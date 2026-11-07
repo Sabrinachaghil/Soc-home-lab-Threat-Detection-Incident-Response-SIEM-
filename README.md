@@ -70,7 +70,7 @@ Script Execution Command:
 python3 wazuh_alerts_analyzer.py test_alerts.json --html security_dashboard.html
 
 Automation Code (wazuh_alerts_analyzer.py):
-
+'''python
 import json
 import argparse
 from pathlib import Path
@@ -206,7 +206,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()'''
 
 
 ### Recommendation (as it would appear in a real IR report)
