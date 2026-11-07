@@ -76,9 +76,11 @@ import argparse
 from pathlib import Path
 from collections import Counter
 
+
 def parse_alerts(log_file):
+    """Parse Wazuh log JSON file line by line and extract security events."""
     alerts = []
-    with open(log_file, 'r', encoding='utf-8') as f:
+    with open(log_file, "r", encoding="utf-8") as f:
         for line in f:
             if not line.strip():
                 continue
@@ -87,44 +89,61 @@ def parse_alerts(log_file):
                 rule = data.get("rule", {})
                 agent = data.get("agent", {})
                 event_data = data.get("data", {})
-                
+
                 alert_info = {
                     "timestamp": data.get("timestamp", "N/A"),
                     "level": rule.get("level", 0),
-                    "description": rule.get("description", "Unknown Description"),
+                    "description": rule.get(
+                        "description", "Unknown Description"
+                    ),
                     "agent_name": agent.get("name", "Unknown Agent"),
-                    "src_ip": event_data.get("srcip", event_data.get("srcuser", "N/A")),
+                    "src_ip": event_data.get(
+                        "srcip", event_data.get("srcuser", "N/A")
+                    ),
                     "dst_ip": event_data.get("dstip", "N/A"),
-                    "mitre_tactics": rule.get("mitre", {}).get("id", ["N/A"])
+                    "mitre_tactics": rule.get("mitre", {}).get("id", ["N/A"]),
                 }
                 alerts.append(alert_info)
             except json.JSONDecodeError:
                 continue
     return alerts
 
+
 def summarize(alerts):
+    """Summarize parsed alerts into statistics and identify critical events."""
     total = len(alerts)
     levels = Counter(alert["level"] for alert in alerts)
     rules = Counter(alert["description"] for alert in alerts)
     agents = Counter(alert["agent_name"] for alert in alerts)
     critical_alerts = [a for a in alerts if a["level"] >= 8]
+
     return {
-        "total": total, "levels": levels, "rules": rules,
-        "agents": agents, "critical_alerts": critical_alerts, "raw_alerts": alerts
+        "total": total,
+        "levels": levels,
+        "rules": rules,
+        "agents": agents,
+        "critical_alerts": critical_alerts,
+        "raw_alerts": alerts,
     }
 
+
 def print_report(summary, top_n):
-    print("\n" + "="*50)
+    """Print clean terminal report summary."""
+    print("\n" + "=" * 50)
     print("      ADVANCED WAZUH SOC SECURITY REPORT      ")
-    print("="*50)
+    print("=" * 50)
     print(f"[-] Total Alerts Parsed: {summary['total']}")
-    print(f"[-] Critical Alerts (Level >= 8): {len(summary['critical_alerts'])}")
+    print(
+        f"[-] Critical Alerts (Level >= 8): {len(summary['critical_alerts'])}"
+    )
     print(f"\n[Top {top_n} Triggered Rules]:")
-    for rule, count in summary['rules'].most_common(top_n):
+    for rule, count in summary["rules"].most_common(top_n):
         print(f"  [{count}] {rule}")
-    print("="*50)
+    print("=" * 50)
+
 
 def export_html(summary, html_path):
+    """Export security findings to a visual HTML Dashboard."""
     html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -151,20 +170,32 @@ def export_html(summary, html_path):
         <table>
             <tr><th>Timestamp</th><th>Level</th><th>Description</th><th>Agent</th><th>Source</th><th>MITRE ID</th></tr>
 """
-    for alert in summary['raw_alerts']:
-        mitre_str = ', '.join(alert['mitre_tactics']) if isinstance(alert['mitre_tactics'], list) else alert['mitre_tactics']
+    for alert in summary["raw_alerts"]:
+        mitre_str = (
+            ", ".join(alert["mitre_tactics"])
+            if isinstance(alert["mitre_tactics"], list)
+            else alert["mitre_tactics"]
+        )
         html_content += f"<tr><td>{alert['timestamp']}</td><td>{alert['level']}</td><td>{alert['description']}</td><td>{alert['agent_name']}</td><td>{alert['src_ip']}</td><td>{mitre_str}</td></tr>"
+
     html_content += "</table></div></body></html>"
-    
-    with open(html_path, 'w', encoding='utf-8') as f:
+
+    with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"[+] HTML Dashboard successfully exported to: {html_path}")
 
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("log_path")
-    parser.add_argument("--html")
-    parser.add_argument("--top", type=int, default=10)
+    parser = argparse.ArgumentParser(
+        description="Wazuh SOC Alert Analyzer & Dashboard Generator"
+    )
+    parser.add_argument("log_path", help="Path to Wazuh JSON alert file")
+    parser.add_argument(
+        "--html", help="Path to output visual HTML dashboard"
+    )
+    parser.add_argument(
+        "--top", type=int, default=10, help="Top N rules to display"
+    )
     args = parser.parse_args()
 
     alerts = parse_alerts(Path(args.log_path))
@@ -172,6 +203,7 @@ def main():
     print_report(summary, args.top)
     if args.html:
         export_html(summary, args.html)
+
 
 if __name__ == "__main__":
     main()
