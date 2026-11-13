@@ -235,7 +235,7 @@ Real issues encountered during setup, kept here to show the debugging process ra
 | sqlmap/nmap/nikto against Metasploitable2 produced zero Wazuh alerts | No Wazuh agent deployed on Metasploitable2 (unsupported legacy OS) | Documented as the project's key finding rather than "fixed" — see Key Finding section below |
 
 ### 🎥 SOC Home Lab Demo
-<video src="./soc-lab-overview.mp4" controls width="100%"></video>
+<video src="./soc-home-lab-overview.mp4" controls width="100%"></video>
 
 ## ⚖️ Disclaimer
 This project is for educational purposes only, performed in a personal, isolated lab environment on applications and systems designed to be vulnerable (Metasploitable2, DVWA). Do not run these techniques against systems you do not own or have explicit authorization to test.
